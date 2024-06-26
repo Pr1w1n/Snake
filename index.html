@@ -55,6 +55,11 @@
         let direction = { x: 0, y: 0 };
         let food = { x: gridSize * 10, y: gridSize * 10 };
 
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+
         function draw() {
             ctx.clearRect(0, 0, canvasSize, canvasSize);
             drawSnake();
@@ -128,6 +133,7 @@
             }
         });
 
+        // Tilt control using DeviceMotionEvent
         if (window.DeviceMotionEvent) {
             window.addEventListener('devicemotion', function (event) {
                 let x = event.accelerationIncludingGravity.x;
@@ -147,6 +153,37 @@
                     }
                 }
             });
+        }
+
+        // Swipe control using touch events
+        canvas.addEventListener('touchstart', function (event) {
+            touchStartX = event.changedTouches[0].screenX;
+            touchStartY = event.changedTouches[0].screenY;
+        }, false);
+
+        canvas.addEventListener('touchend', function (event) {
+            touchEndX = event.changedTouches[0].screenX;
+            touchEndY = event.changedTouches[0].screenY;
+            handleSwipe();
+        }, false);
+
+        function handleSwipe() {
+            let diffX = touchEndX - touchStartX;
+            let diffY = touchEndY - touchStartY;
+
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX > 0 && direction.x === 0) {
+                    direction = { x: gridSize, y: 0 }; // swipe right
+                } else if (diffX < 0 && direction.x === 0) {
+                    direction = { x: -gridSize, y: 0 }; // swipe left
+                }
+            } else {
+                if (diffY > 0 && direction.y === 0) {
+                    direction = { x: 0, y: gridSize }; // swipe down
+                } else if (diffY < 0 && direction.y === 0) {
+                    direction = { x: 0, y: -gridSize }; // swipe up
+                }
+            }
         }
 
         setInterval(update, 100);
