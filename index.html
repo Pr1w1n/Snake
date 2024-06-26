@@ -13,9 +13,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="SnakePWA">
     <!-- Homescreen icons -->
-    <link rel="apple-touch-icon" sizes="192x192" href="img/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192x192.png">
     <meta name="msapplication-TileColor" content="#ffffff">
-    <meta name="msapplication-TileImage" content="img/icon-192x192.png">
+    <meta name="msapplication-TileImage" content="icons/icon-192x192.png">
     <meta name="theme-color" content="#2196f3">
     <link rel='manifest' href='manifest-snake.json'>
     <title>SnakePWA</title>
@@ -95,7 +95,6 @@
         let snake = [{ x: gridSize * 5, y: gridSize * 5 }];
         let direction = { x: 0, y: 0 };
         let food = { x: gridSize * 10, y: gridSize * 10 };
-        let useTiltControls = false;
 
         let touchStartX = 0;
         let touchStartY = 0;
@@ -159,7 +158,6 @@
         }
 
         document.addEventListener("keydown", event => {
-            useTiltControls = false; // Disable tilt controls if a key is pressed
             switch (event.key) {
                 case "ArrowUp":
                     if (direction.y === 0) direction = { x: 0, y: -gridSize };
@@ -175,30 +173,6 @@
                     break;
             }
         });
-
-        // Tilt control using DeviceMotionEvent
-        if (window.DeviceMotionEvent) {
-            window.addEventListener('devicemotion', function (event) {
-                let x = event.accelerationIncludingGravity.x;
-                let y = event.accelerationIncludingGravity.y;
-
-                useTiltControls = true; // Enable tilt controls when device motion is detected
-
-                if (Math.abs(x) > Math.abs(y)) {
-                    if (x > 1 && direction.x === 0) {
-                        direction = { x: gridSize, y: 0 }; // tilt right
-                    } else if (x < -1 && direction.x === 0) {
-                        direction = { x: -gridSize, y: 0 }; // tilt left
-                    }
-                } else {
-                    if (y > 1 && direction.y === 0) {
-                        direction = { x: 0, y: gridSize }; // tilt down
-                    } else if (y < -1 && direction.y === 0) {
-                        direction = { x: 0, y: -gridSize }; // tilt up
-                    }
-                }
-            });
-        }
 
         // Swipe control using touch events
         canvas.addEventListener('touchstart', function (event) {
@@ -216,8 +190,6 @@
             let diffX = touchEndX - touchStartX;
             let diffY = touchEndY - touchStartY;
 
-            useTiltControls = false; // Disable tilt controls if a swipe is detected
-
             if (Math.abs(diffX) > Math.abs(diffY)) {
                 if (diffX > 0 && direction.x === 0) {
                     direction = { x: gridSize, y: 0 }; // swipe right
@@ -233,14 +205,7 @@
             }
         }
 
-        let updateInterval = setInterval(update, 100);
-
-        function updateSpeed() {
-            clearInterval(updateInterval);
-            updateInterval = setInterval(update, useTiltControls ? 200 : 100); // Slower speed for tilt controls
-        }
-
-        setInterval(updateSpeed, 500); // Check and update speed periodically
+        setInterval(update, 100);
     </script>
 </body>
 
