@@ -22,12 +22,15 @@
     <style>
         body {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
             height: 100vh;
             background-color: #000;
             margin: 0;
             font-family: Arial, sans-serif;
+            color: white;
+            overflow: hidden;
         }
 
         #gameCanvas {
@@ -45,12 +48,52 @@
             border-radius: 5px;
             display: none;
         }
+
+        #gameOverOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            display: none;
+            z-index: 10;
+        }
+
+        #restartButton {
+            padding: 10px 20px;
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #scoreboard {
+            display: flex;
+            justify-content: space-between;
+            width: 400px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 
 <body>
+    <div id="scoreboard">
+        <div>Score: <span id="score">0</span></div>
+        <div>Highscore: <span id="highscore">0</span></div>
+    </div>
     <canvas id="gameCanvas" width="400" height="400"></canvas>
     <button id="installPrompt">Install App</button>
+    <div id="gameOverOverlay">
+        <h1>Game Over</h1>
+        <button id="restartButton">Restart Game</button>
+    </div>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function () {
@@ -71,8 +114,6 @@
             installButton.style.display = 'block';
 
             installButton.addEventListener('click', () => {
-                // Hide the install button
-                installButton.style.display = 'none';
                 // Show the install prompt
                 deferredPrompt.prompt();
                 // Wait for the user to respond to the prompt
@@ -95,6 +136,14 @@
         let snake = [{ x: gridSize * 5, y: gridSize * 5 }];
         let direction = { x: 0, y: 0 };
         let food = { x: gridSize * 10, y: gridSize * 10 };
+        let gameOver = false;
+        let score = 0;
+        let highscore = localStorage.getItem('highscore') || 0;
+
+        document.getElementById('highscore').textContent = highscore;
+
+        const gameOverOverlay = document.getElementById('gameOverOverlay');
+        const restartButton = document.getElementById('restartButton');
 
         let touchStartX = 0;
         let touchStartY = 0;
@@ -123,6 +172,8 @@
             const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
             snake.unshift(head);
             if (head.x === food.x && head.y === food.y) {
+                score++;
+                document.getElementById('score').textContent = score;
                 placeFood();
             } else {
                 snake.pop();
@@ -148,27 +199,84 @@
         }
 
         function update() {
+            if (gameOver) return;
             moveSnake();
             if (checkCollision()) {
-                alert("Game Over!");
-                snake = [{ x: gridSize * 5, y: gridSize * 5 }];
-                direction = { x: 0, y: 0 };
+                gameOver = true;
+                if (score > highscore) {
+                    highscore = score;
+                    localStorage.setItem('highscore', highscore);
+                    document.getElementById('highscore').textContent = highscore;
+                }
+                showGameOverOverlay();
             }
             draw();
         }
 
+        function showGameOverOverlay() {
+            gameOverOverlay.style.display = 'flex';
+        }
+
+        function hideGameOverOverlay() {
+            gameOverOverlay.style.display = 'none';
+        }
+
+        function resetGame() {
+            snake = [{ x: gridSize * 5, y: gridSize * 5 }];
+            direction = { x: 0, y: 0 };
+            food = { x: gridSize * 10, y: gridSize * 10 };
+            score = 0;
+            document.getElementById('score').textContent = score;
+            gameOver = false;
+            hideGameOverOverlay();
+            draw();
+        }
+
+        restartButton.addEventListener('click', resetGame);
+
+        gameOverOverlay.addEventListener('touchstart', function (event) {
+            touchStartX = event.changedTouches[0].screenX;
+            touchStartY = event.changedTouches[0].screenY;
+        }, false);
+
+        gameOverOverlay.addEventListener('touchend', function (event) {
+            touchEndX = event.changedTouches[0].screenX;
+            touchEndY = event.changedTouches[0].screenY;
+            handleSwipe();
+        }, false);
+
+        function handleSwipe() {
+            let diffX = touchEndX - touchStartX;
+            let diffY = touchEndY - touchStartY;
+
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX > 0 || diffX < 0) {
+                    resetGame();
+                }
+            } else {
+                if (diffY > 0 || diffY < 0) {
+                    resetGame();
+                }
+            }
+        }
+
         document.addEventListener("keydown", event => {
+            if (gameOver) return;
             switch (event.key) {
                 case "ArrowUp":
+                case "w":
                     if (direction.y === 0) direction = { x: 0, y: -gridSize };
                     break;
                 case "ArrowDown":
+                case "s":
                     if (direction.y === 0) direction = { x: 0, y: gridSize };
                     break;
                 case "ArrowLeft":
+                case "a":
                     if (direction.x === 0) direction = { x: -gridSize, y: 0 };
                     break;
                 case "ArrowRight":
+                case "d":
                     if (direction.x === 0) direction = { x: gridSize, y: 0 };
                     break;
             }
@@ -185,25 +293,6 @@
             touchEndY = event.changedTouches[0].screenY;
             handleSwipe();
         }, false);
-
-        function handleSwipe() {
-            let diffX = touchEndX - touchStartX;
-            let diffY = touchEndY - touchStartY;
-
-            if (Math.abs(diffX) > Math.abs(diffY)) {
-                if (diffX > 0 && direction.x === 0) {
-                    direction = { x: gridSize, y: 0 }; // swipe right
-                } else if (diffX < 0 && direction.x === 0) {
-                    direction = { x: -gridSize, y: 0 }; // swipe left
-                }
-            } else {
-                if (diffY > 0 && direction.y === 0) {
-                    direction = { x: 0, y: gridSize }; // swipe down
-                } else if (diffY < 0 && direction.y === 0) {
-                    direction = { x: 0, y: -gridSize }; // swipe up
-                }
-            }
-        }
 
         setInterval(update, 100);
     </script>
