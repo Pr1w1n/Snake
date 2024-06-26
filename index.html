@@ -242,10 +242,21 @@
         gameOverOverlay.addEventListener('touchend', function (event) {
             touchEndX = event.changedTouches[0].screenX;
             touchEndY = event.changedTouches[0].screenY;
-            handleSwipe();
+            handleSwipeOverlay();
         }, false);
 
-        function handleSwipe() {
+        canvas.addEventListener('touchstart', function (event) {
+            touchStartX = event.changedTouches[0].screenX;
+            touchStartY = event.changedTouches[0].screenY;
+        }, false);
+
+        canvas.addEventListener('touchend', function (event) {
+            touchEndX = event.changedTouches[0].screenX;
+            touchEndY = event.changedTouches[0].screenY;
+            handleSwipeCanvas();
+        }, false);
+
+        function handleSwipeOverlay() {
             let diffX = touchEndX - touchStartX;
             let diffY = touchEndY - touchStartY;
 
@@ -256,6 +267,27 @@
             } else {
                 if (diffY > 0 || diffY < 0) {
                     resetGame();
+                }
+            }
+        }
+
+        function handleSwipeCanvas() {
+            if (gameOver) return;
+
+            let diffX = touchEndX - touchStartX;
+            let diffY = touchEndY - touchStartY;
+
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX > 0 && direction.x === 0) {
+                    direction = { x: gridSize, y: 0 }; // swipe right
+                } else if (diffX < 0 && direction.x === 0) {
+                    direction = { x: -gridSize, y: 0 }; // swipe left
+                }
+            } else {
+                if (diffY > 0 && direction.y === 0) {
+                    direction = { x: 0, y: gridSize }; // swipe down
+                } else if (diffY < 0 && direction.y === 0) {
+                    direction = { x: 0, y: -gridSize }; // swipe up
                 }
             }
         }
@@ -281,18 +313,6 @@
                     break;
             }
         });
-
-        // Swipe control using touch events
-        canvas.addEventListener('touchstart', function (event) {
-            touchStartX = event.changedTouches[0].screenX;
-            touchStartY = event.changedTouches[0].screenY;
-        }, false);
-
-        canvas.addEventListener('touchend', function (event) {
-            touchEndX = event.changedTouches[0].screenX;
-            touchEndY = event.changedTouches[0].screenY;
-            handleSwipe();
-        }, false);
 
         setInterval(update, 100);
     </script>
