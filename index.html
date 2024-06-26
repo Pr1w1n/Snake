@@ -181,8 +181,14 @@
         }
 
         function placeFood() {
-            food.x = Math.floor(Math.random() * (canvasSize / gridSize)) * gridSize;
-            food.y = Math.floor(Math.random() * (canvasSize / gridSize)) * gridSize;
+            let foodPlaced = false;
+            while (!foodPlaced) {
+                food.x = Math.floor(Math.random() * (canvasSize / gridSize)) * gridSize;
+                food.y = Math.floor(Math.random() * (canvasSize / gridSize)) * gridSize;
+
+                // Check if the new food position coincides with any part of the snake
+                foodPlaced = !snake.some(segment => segment.x === food.x && segment.y === food.y);
+            }
         }
 
         function checkCollision() {
