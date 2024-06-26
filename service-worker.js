@@ -1,12 +1,10 @@
-const cacheName = 'PingPong';
-
+const cacheName = 'Snake';
 
 const staticAssets = [ 
   './',
   './index.html',
   './manifest-snake.json',
   './service-worker.js'
-  
 ];
 
 self.addEventListener('install', async e => {
