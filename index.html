@@ -2,168 +2,134 @@
 <html>
 
 <head>
-<meta charset=utf-8 />
-<meta
-      name="viewport"
-      content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
- />
-	
-<!-- Add to homescreen for Chrome on Android. Fallback for manifest.json -->
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="application-name" content="PingPong">
-   
-<!-- Add to homescreen for Safari on iOS -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="PingPong">
-   	
-	
-<!-- Homescreen icons -->
-<link rel="apple-touch-icon" sizes="192x192" href="/icon/icon-192x192.png">
-
-
-<meta name="msapplication-TileColor" content="#ffffff">
-<meta name="msapplication-TileImage" content="/icon/icon-144x144.png">
-<meta name="theme-color" content="#ffffff">
-	
-<link rel='manifest' href='manifest.json'><!-- kein / vor manifest,json sonnst sucht es nicht im selben Ordner-->
-<title>Canvas</title>
+    <meta charset=utf-8 />
+    <meta name="viewport"
+        content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <!-- Add to homescreen for Chrome on Android. Fallback for manifest.json -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Snake Game">
+    <!-- Add to homescreen for Safari on iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Snake Game">
+    <!-- Homescreen icons -->
+    <link rel="apple-touch-icon" sizes="192x192" href="/icon/icon-192x192.png">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="/icon/icon-144x144.png">
+    <meta name="theme-color" content="#ffffff">
+    <link rel='manifest' href='manifest.json'>
+    <title>Snake Game</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        #gameCanvas {
+            border: 1px solid #fff;
+            background-color: #000;
+        }
+    </style>
 </head>
 
 <body>
-<canvas id="MeinCanvas" width="400" height="600"></canvas>
-	
-<script>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('./service-worker.js');
+                console.log("Service Worker registered");
+            });
+        }
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('./service-worker.js');
-	console.log("Servive Worker registered");	  
-  });
-}
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
 
-//Als globale Variablen deklariert um mit allen Functions darauf zugreifen zu können
-	document.body.style.overflow = 'hidden';
-	
-	var x = 20;
-	var y = 200;
-	var dx = 0.5;
-	var dy = 1;
-	var R =10;
-	var context = MeinCanvas.getContext('2d');
-		
-	var padlx = 50;
-	var counter = 0;
-	var timer;
-	startflag = true;
-	
-	var canv = document.getElementById("MeinCanvas");
-	canv.width = document.documentElement.clientWidth;
-	canv.height = document.documentElement.clientHeight;
-	var WIDTH = canv.width;
-	var HEIGHT = canv.height;
+        const gridSize = 20;
+        const canvasSize = canvas.width;
+        let snake = [{ x: gridSize * 5, y: gridSize * 5 }];
+        let direction = { x: 0, y: 0 };
+        let food = { x: gridSize * 10, y: gridSize * 10 };
 
-	function init(){
-		
-		document.addEventListener('keydown', function(event){
-			console.log(event);
-			console.log(event.key);
-			if(event.key == 'ArrowLeft' & padlx > 0){
-				padlx = padlx - 5;
-			}
-			if(event.key == 'ArrowRight' & padlx + 150 < WIDTH){
-				padlx = padlx + 5;
-			}
-			if(event.key == 'Enter'){
-				 timer = setInterval(draw, 4);
-				
-			}
-			
-		
-		});
-		
-		window.ondevicemotion = function(ereignis){
-		
- 
-   			var xgyro = Math.round(ereignis.accelerationIncludingGravity.x * 100) / 100;
-			padlx = padlx - xgyro;
-			
-			var xaccel = 0;//Math.round(ereignis.acceleration.x);
-  			var yaccel = Math.round(ereignis.acceleration.y);
-			var zaccel = Math.round(ereignis.acceleration.z);
-			
-			if(xaccel^2 + yaccel^2 + zaccel^2 > 10 && startflag ){ 
-				timer = setInterval(draw, 4);
-				startflag = false;
-			}
-			
-			
-		}
-		//timer = setInterval(draw, 5);
-		draw();
-	
-	}
+        function draw() {
+            ctx.clearRect(0, 0, canvasSize, canvasSize);
+            drawSnake();
+            drawFood();
+        }
 
-	function ball(x, y , r){
-		context.fillStyle = "#00A3B1";
-		context.beginPath();
-		context.arc(x, y, r, 0, Math.PI * 2, true);
-		context.closePath();
-		context.fill();
-	}
-	
-	function padl(x){
-		context.fillStyle = "#B1A308";
-		//context.beginPath();
-		context.fillRect(x, HEIGHT -50, 150, 20);
-		//context.closePath();
-		//context.fill();
-	}
+        function drawSnake() {
+            ctx.fillStyle = "#0f0";
+            snake.forEach(segment => {
+                ctx.fillRect(segment.x, segment.y, gridSize, gridSize);
+            });
+        }
 
-	function clear(){
-		//context.clearRect(0, 0, WIDTH, HEIGHT);
-		context.fillStyle = "lightgrey";
-		context.fillRect(0, 0,  WIDTH, HEIGHT);
-	}
+        function drawFood() {
+            ctx.fillStyle = "#f00";
+            ctx.fillRect(food.x, food.y, gridSize, gridSize);
+        }
 
+        function moveSnake() {
+            const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
+            snake.unshift(head);
+            if (head.x === food.x && head.y === food.y) {
+                placeFood();
+            } else {
+                snake.pop();
+            }
+        }
 
-	function draw(){
-		
-		clear()
-		padl(padlx);
-		ball(x, y, 10)
-		if (x > WIDTH - R || x < 0 + R){
-			dx = -dx;
-		}
-		if (y > HEIGHT - R || y < 0 + R){
-			dy = -dy;
-		}
-		
-		if (y > HEIGHT - (R + 1)){
-		
-			var ausgabe = "GAME OVER, SCORE: " + counter;
-			context.font = "25px Arial";
-			context.fillText(ausgabe, 10, 50);
-			clearInterval(timer);
-			timer = 0;//zur Sicherheit auch noch null setzten
-			startflag = true;
-		}
-		
-		if( y > (HEIGHT -50 - 20 + R) & y < (HEIGHT -50 + 20 + R) & x > padlx & x < padlx + 150 )
-		{
-			dy = -dy;
-			counter++;
-			console.log(counter);
-		}
-		
-		x = x + dx;
-		y = y - dy;
-	}
+        function placeFood() {
+            food.x = Math.floor(Math.random() * (canvasSize / gridSize)) * gridSize;
+            food.y = Math.floor(Math.random() * (canvasSize / gridSize)) * gridSize;
+        }
 
-	init();
+        function checkCollision() {
+            const head = snake[0];
+            if (head.x < 0 || head.x >= canvasSize || head.y < 0 || head.y >= canvasSize) {
+                return true;
+            }
+            for (let i = 1; i < snake.length; i++) {
+                if (head.x === snake[i].x && head.y === snake[i].y) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
+        function update() {
+            moveSnake();
+            if (checkCollision()) {
+                alert("Game Over!");
+                snake = [{ x: gridSize * 5, y: gridSize * 5 }];
+                direction = { x: 0, y: 0 };
+            }
+            draw();
+        }
 
-</script>
+        document.addEventListener("keydown", event => {
+            switch (event.key) {
+                case "ArrowUp":
+                    if (direction.y === 0) direction = { x: 0, y: -gridSize };
+                    break;
+                case "ArrowDown":
+                    if (direction.y === 0) direction = { x: 0, y: gridSize };
+                    break;
+                case "ArrowLeft":
+                    if (direction.x === 0) direction = { x: -gridSize, y: 0 };
+                    break;
+                case "ArrowRight":
+                    if (direction.x === 0) direction = { x: gridSize, y: 0 };
+                    break;
+            }
+        });
+
+        setInterval(update, 100);
+    </script>
 </body>
 
 </html>
